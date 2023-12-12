@@ -1,0 +1,84 @@
+
+version: '3.4'
+
+services:
+  clp:
+    image: python-apps
+    container_name: clp
+    hostname: clp
+    command: python3 CLP.py
+    ports:
+      - 50000:50000
+    environment:
+      - TCP_PORT=50000
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    networks:
+      - tp_network
+  motor_controller:
+    image: python-apps
+    container_name: motor_controller
+    hostname: motor_controller
+    command: python3 motor_controller.py
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    networks:
+      - tp_network
+  tcp_client:
+    image: python-apps
+    container_name: tcp_client
+    hostname: tcp_client
+    environment:
+      - TCP_PORT=50000
+      - HOST=clp
+    volumes:
+      - ./historiador.txt:/usr/src/app/historiador.txt
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    networks:
+      - tp_network
+  grafana:
+    image: grafana/grafana
+    container_name: grafana1
+    hostname: grafana
+    environment:
+      -  GF_SECURITY_ADMIN_PASSWORD=admin
+    restart: unless-stopped
+    volumes:
+      - ./dashboard/grafana/grafana-data:/var/lib/grafana
+    ports:
+      - 3000:3000
+    networks:
+      - tp_network
+    
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    restart: unless-stopped
+    environment:
+      - INFLUXDB_DB=opcua_db
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+    ports:
+      - 8086:8086
+    networks:
+      - tp_network
+    volumes:
+      - ./dashboard/influxdb:/var/lib/influxdb
+      - ./dashboard/influxdb/config:/etc/influxdb:ro
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+  telegraf:
+    image: telegraf
+    container_name: opcua_telegraf
+    restart: unless-stopped
+    volumes:
+      - ./dashboard/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    networks:
+      - tp_network
+
+networks:
+  tp_network:
+    driver: brigde

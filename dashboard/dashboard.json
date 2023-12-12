@@ -1,0 +1,508 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "fixedColor": "green",
+              "mode": "fixed"
+            },
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "index": 0,
+                    "text": "OFF"
+                  },
+                  "1": {
+                    "index": 1,
+                    "text": "ON"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "max": 1,
+            "min": 0,
+            "noValue": "0",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 20,
+          "x": 0,
+          "y": 0
+        },
+        "id": 6,
+        "options": {
+          "displayMode": "gradient",
+          "minVizHeight": 10,
+          "minVizWidth": 0,
+          "orientation": "vertical",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showUnfilled": false,
+          "text": {
+            "titleSize": 12
+          },
+          "valueMode": "color"
+        },
+        "pluginVersion": "10.1.5",
+        "targets": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+            },
+            "query": "import \"strings\"\n\nfrom(bucket: \"opc\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"opcua\")\n  |> filter(fn: (r) => r[\"_field\"] =~ /motor\\d+Status/)\n  |> filter(fn: (r) => r[\"host\"] == \"f0eee15fd0b8\")\n  |> map(fn: (r) => ({ r with _field: strings.title(v: strings.replace(i: 1, v: r._field, t: \"Status\", u: \"\")), _value: if r._value == \"on\" then \"1\" else if r._value == \"off\" then \"0\" else \"0\" }))\n  |> toInt()\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")\n\n",
+            "refId": "A"
+          }
+        ],
+        "title": "Motores Ligados",
+        "type": "bargauge"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "min": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 1300
+                },
+                {
+                  "color": "red",
+                  "value": 1500
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 5
+        },
+        "id": 8,
+        "options": {
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": false
+        },
+        "pluginVersion": "10.1.5",
+        "targets": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+            },
+            "query": "import \"strings\"\n\nfrom(bucket: \"opc\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"opcua\")\n  |> filter(fn: (r) => r[\"_field\"] =~ /(?i)motor\\d+Speed/)\n  |> filter(fn: (r) => r[\"host\"] == \"f0eee15fd0b8\")\n  |> map(fn: (r) => ({ r with _field: strings.toTitle(v: strings.replace(i: 1, v: r._field, t: \"(?i)Speed\", u: \"\")), _value: r._value * 60.00/6.3 }))\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+            "refId": "A"
+          }
+        ],
+        "title": "Velocidade (RPM)",
+        "transformations": [],
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 100
+                },
+                {
+                  "color": "red",
+                  "value": 150
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 13,
+          "x": 8,
+          "y": 5
+        },
+        "id": 9,
+        "options": {
+          "displayMode": "gradient",
+          "minVizHeight": 10,
+          "minVizWidth": 0,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showUnfilled": true,
+          "valueMode": "color"
+        },
+        "pluginVersion": "10.1.5",
+        "targets": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+            },
+            "query": "import \"strings\"\n\nfrom(bucket: \"opc\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"opcua\")\n  |> filter(fn: (r) => r[\"_field\"] =~ /motor\\d+Voltage/)\n  |> filter(fn: (r) => r[\"host\"] == \"f0eee15fd0b8\")\n  |> map(fn: (r) => ({ r with _field: strings.toTitle(v: strings.replace(i:1,v: r._field, t: \"Speed\", u: \"\")), _value: r._value }))\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+            "refId": "A"
+          }
+        ],
+        "title": "Tensão de Armadura (V)",
+        "type": "bargauge"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "__systemRef": "hideSeriesFrom",
+              "matcher": {
+                "id": "byNames",
+                "options": {
+                  "mode": "exclude",
+                  "names": [
+                    "motor1Voltage {host=\"f0eee15fd0b8\", id=\"motor1\"}",
+                    "motor5Voltage {host=\"f0eee15fd0b8\", id=\"motor5\"}",
+                    "motor7Voltage {host=\"f0eee15fd0b8\", id=\"motor7\"}",
+                    "motor3Voltage {host=\"f0eee15fd0b8\", id=\"motor3\"}"
+                  ],
+                  "prefix": "All except:",
+                  "readOnly": true
+                }
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 8,
+          "x": 0,
+          "y": 13
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+            },
+            "query": "from(bucket: \"opc\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"opcua\")\n  |> filter(fn: (r) => r[\"id\"] == \"motor3\" or r[\"id\"] == \"motor4\" or r[\"id\"] == \"motor5\" or r[\"id\"] == \"motor6\" or r[\"id\"] == \"motor7\" or r[\"id\"] == \"motor8\" or r[\"id\"] == \"motor9\" or r[\"id\"] == \"motor11\" or r[\"id\"] == \"motor2\" or r[\"id\"] == \"motor10\" or r[\"id\"] == \"motor1\")\n  |> filter(fn: (r) => r[\"_field\"] == \"motor2Voltage\" or r[\"_field\"] == \"motor3Voltage\" or r[\"_field\"] == \"motor5Voltage\" or r[\"_field\"] == \"motor4Voltage\" or r[\"_field\"] == \"motor6Voltage\" or r[\"_field\"] == \"motor7Voltage\" or r[\"_field\"] == \"motor8Voltage\" or r[\"_field\"] == \"motor9Voltage\" or r[\"_field\"] == \"motor1Voltage\" or r[\"_field\"] == \"motor10Voltage\")\n  |> filter(fn: (r) => r[\"host\"] == \"f0eee15fd0b8\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+            "refId": "A"
+          }
+        ],
+        "title": "Tensão de Armadura",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "__systemRef": "hideSeriesFrom",
+              "matcher": {
+                "id": "byNames",
+                "options": {
+                  "mode": "exclude",
+                  "names": [
+                    "motor3Speed {host=\"f0eee15fd0b8\", id=\"motor3\"}",
+                    "motor1Speed {host=\"f0eee15fd0b8\", id=\"motor1\"}",
+                    "motor5Speed {host=\"f0eee15fd0b8\", id=\"motor5\"}",
+                    "motor7Speed {host=\"f0eee15fd0b8\", id=\"motor7\"}"
+                  ],
+                  "prefix": "All except:",
+                  "readOnly": true
+                }
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 13,
+          "x": 8,
+          "y": 13
+        },
+        "id": 2,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "ccdbcdd4-3fd2-4aed-a8fb-2e868ecfa86c"
+            },
+            "query": "from(bucket: \"opc\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"opcua\")\n  |> filter(fn: (r) => r[\"id\"] == \"motor3\" or r[\"id\"] == \"motor4\" or r[\"id\"] == \"motor5\" or r[\"id\"] == \"motor6\" or r[\"id\"] == \"motor7\" or r[\"id\"] == \"motor8\" or r[\"id\"] == \"motor9\" or r[\"id\"] == \"motor11\" or r[\"id\"] == \"motor2\" or r[\"id\"] == \"motor10\" or r[\"id\"] == \"motor1\")\n  |> filter(fn: (r) => r[\"_field\"] == \"motor2Speed\" or r[\"_field\"] == \"motor3Speed\" or r[\"_field\"] == \"motor5Speed\" or r[\"_field\"] == \"motor4Speed\" or r[\"_field\"] == \"motor6Speed\" or r[\"_field\"] == \"motor7Speed\" or r[\"_field\"] == \"motor8Speed\" or r[\"_field\"] == \"motor9Speed\" or r[\"_field\"] == \"motor1Speed\" or r[\"_field\"] == \"motor10Speed\")\n  |> filter(fn: (r) => r[\"host\"] == \"f0eee15fd0b8\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+            "refId": "A"
+          }
+        ],
+        "title": "Motor Velocidade",
+        "type": "timeseries"
+      }
+    ],
+    "refresh": false,
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-5m",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "OPCUA - Dashboard",
+    "uid": "b6526c2c-43b7-447e-b460-68bb3812e474",
+    "version": 3,
+    "weekStart": ""
+  }
